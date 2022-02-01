@@ -1,2 +1,2 @@
 # deeplearning
-Backup files for deep learning course
+Backup files for deep learning class.
