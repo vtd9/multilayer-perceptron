@@ -28,7 +28,7 @@ class Dataset(object):
     self.y_test = None
 
     if make_y_one_hot:
-      self.y = Utility.make_one_hot(self.y)
+      self.y = utility.Utility.make_one_hot(self.y)
     if scale_X:
       self.X = self.X.astype('float64') / max_intensity
 

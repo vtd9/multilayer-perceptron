@@ -54,7 +54,7 @@ class Perceptron(object):
     # For each layer besides the input layer, attach the appropriate dimensions, 
     # activation function, and initialization parameters
     for i in range(self.n_layers - 1):
-      self.layers[i + 1] = Layer(
+      self.layers[i + 1] = layer.Layer(
           in_dim=self.dims[i], out_dim=self.dims[i+1],
           activ_fun=self.activ_fns[i], 
           init_with_normal=init_with_normal,

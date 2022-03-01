@@ -23,30 +23,19 @@ class Utility(object):
       verbose (bool): True to print loss and accuracy values after each epoch
 
     Returns:
+      Array of losses at each epoch, array of accuracy at each epoch
     
     '''
     assert (epochs > 0)
     train_loss = np.empty(epochs)
     train_acc = np.empty(epochs)
-    valid_loss = np.empty(epochs)
-    valid_acc = np.empty(epochs)
     start_time = time.time()
     if verbose:
       print('Epoch \tTrain_loss \tTrain_acc \tValid_loss \tValid_acc')
 
     for epoch in range(epochs):
-      # Make iterators
       train_iter = dataset.make_batches(batch_size, group='train', 
                                         shuffle_again=shuffle_every_epoch)
-      valid_iter = dataset.make_batches(batch_size, group='valid',
-                                        shuffle_again=shuffle_every_epoch)
-
-      # Train and validate - validate "previous" model before updating
-      # i.e., the first validation should achieve an accuracy ~10% for a 
-      # 10-class classification problem
-      valid_loss[epoch], valid_acc[epoch] = mlp.train(valid_iter, lr, 
-                                                      batch_size,
-                                                      train_mode=False)
       train_loss[epoch], train_acc[epoch] = mlp.train(train_iter, lr, 
                                                       batch_size,
                                                       train_mode=True)
@@ -54,8 +43,7 @@ class Utility(object):
       # If set to print out info as executing
       if verbose:
         print('{} \t{:9.3f} \t{:9.3f} \t {:9.3f} \t{:9.3f}'.format(
-            epoch, train_loss[epoch], train_acc[epoch], 
-            valid_loss[epoch], valid_acc[epoch]))
+            epoch, train_loss[epoch], train_acc[epoch])
       
       # Check for explosion or vanishing
       if np.isnan(train_loss[epoch]) or np.isinf(train_loss[epoch]):       
@@ -65,7 +53,7 @@ class Utility(object):
     print('Time elapsed (s): {:2.1f}\n'.format(time.time() - start_time))
 
 
-    return train_loss, train_acc, valid_loss, valid_acc
+    return train_loss, train_acc
   
   @staticmethod
   def make_one_hot(y):
