@@ -1,4 +1,5 @@
 import numpy as np
+from utility import Utility
 
 class Dataset(object):
   '''
@@ -19,7 +20,7 @@ class Dataset(object):
       max_intensity (float): Maximum intensity of input. Default = 255.
     '''
     self.X = X
-    self.y = y
+    self.y = y.astype('int32')
     self.X_train = None
     self.y_train = None
     self.X_valid = None
@@ -28,7 +29,7 @@ class Dataset(object):
     self.y_test = None
 
     if make_y_one_hot:
-      self.y = utility.Utility.make_one_hot(self.y)
+      self.y = Utility.make_one_hot(self.y)
     if scale_X:
       self.X = self.X.astype('float64') / max_intensity
 

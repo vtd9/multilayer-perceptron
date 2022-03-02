@@ -1,4 +1,7 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import time
+import loss
 
 class Utility(object):
   '''
@@ -7,10 +10,10 @@ class Utility(object):
   '''
 
   @staticmethod
-  def train_and_validate(mlp, dataset, lr, epochs, batch_size,
-                         shuffle_every_epoch=True, verbose=True):
+  def train_epochs(mlp, dataset, lr, epochs, batch_size,
+                   shuffle_every_epoch=True, verbose=True):
     '''
-    Train and validate in parallel over one or more epochs.
+    Train a model over several epochs.
 
     Args:
       mlp: Perceptron object to train
@@ -31,7 +34,7 @@ class Utility(object):
     train_acc = np.empty(epochs)
     start_time = time.time()
     if verbose:
-      print('Epoch \tTrain_loss \tTrain_acc \tValid_loss \tValid_acc')
+      print('Epoch \tTrain_loss \tTrain_acc')
 
     for epoch in range(epochs):
       train_iter = dataset.make_batches(batch_size, group='train', 
@@ -42,11 +45,11 @@ class Utility(object):
       
       # If set to print out info as executing
       if verbose:
-        print('{} \t{:9.3f} \t{:9.3f} \t {:9.3f} \t{:9.3f}'.format(
-            epoch, train_loss[epoch], train_acc[epoch])
+        print('{} \t{:9.3f} \t{:9.3f}'.format(
+            epoch, train_loss[epoch], train_acc[epoch]))
       
       # Check for explosion or vanishing
-      if np.isnan(train_loss[epoch]) or np.isinf(train_loss[epoch]):       
+      if np.isnan(train_loss[epoch]) or np.isinf(train_loss[epoch]):      
         raise Exception('Loss has become NaN or infinity! Stop training.')
 
     # Print amount of time taken
@@ -129,7 +132,8 @@ class Utility(object):
       plt.ylim(0, ymax)
 
   @staticmethod
-  def plot_images(data, images=3, show_random=False, mlp=None, cols=5):
+  def plot_images(data, images=3, show_random=False, mlp=None, cols=5,
+                  show=False):
     '''
     Plot using the flattened representation of a square image in input X.
 
@@ -138,6 +142,9 @@ class Utility(object):
       images (int): Number of images to sample and show
       mlp: Perceptron object to pass images through. None to not make any
         predictions and just show the true labels instead.
+      cols (int): Number of columns to arrange images in
+      show (bool): True to explicitly call plt.show() - do not need to set
+        if running in a Jupyter notebook
 
     '''
     if show_random: # Get random sample from dataset
@@ -151,7 +158,7 @@ class Utility(object):
     # Pass selected images through MLP to get predictions, if requested
     if mlp is not None:
       mlp.forward(sample_X, sample_X.shape[-1])
-      sample_yhat = Loss.accuracy(mlp[-1].a, sample_y, False, True)
+      sample_yhat = loss.Loss.accuracy(mlp[-1].a, sample_y, False, True)
 
     # Display data as images
     width = int(data.X.shape[0]**0.5)
@@ -168,3 +175,6 @@ class Utility(object):
           plt.title('true: {}'.format(sample_y[i]))
 
     plt.subplots_adjust(hspace=1.0)
+    
+    if show:
+      plt.show()

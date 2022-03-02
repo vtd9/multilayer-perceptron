@@ -1,4 +1,5 @@
 import numpy as np
+import utility
 
 class Loss(object):
   '''
@@ -10,7 +11,7 @@ class Loss(object):
   def cross_entropy(yhat, y, epsilon=1e-5, derive=False):
     '''
     Computes the cross-entropy loss or its gradient with respect to logits for 
-    a batch of predictions.
+    a batch of predictions.util
 
     Args:
       yhat (ndarray): Outputs (after activation) from a MLP
@@ -81,7 +82,7 @@ class Loss(object):
 
     # Reverse the actual labels' representation as one-hot for easier comparison
     if y_one_hot:
-      y = Utility.reverse_one_hot(y)
+      y = utility.Utility.reverse_one_hot(y)
 
     # If want to return the actual predictions
     if return_predict:
