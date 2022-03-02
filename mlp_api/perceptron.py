@@ -1,4 +1,11 @@
 import numpy as np
+import os
+import sys
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(script_dir))
+import layer
+import loss
 
 class Perceptron(object):
   '''
@@ -54,7 +61,7 @@ class Perceptron(object):
     # For each layer besides the input layer, attach the appropriate dimensions, 
     # activation function, and initialization parameters
     for i in range(self.n_layers - 1):
-      self.layers[i + 1] = Layer(
+      self.layers[i + 1] = layer.Layer(
           in_dim=self.dims[i], out_dim=self.dims[i+1],
           activ_fun=self.activ_fns[i], 
           init_with_normal=init_with_normal,
@@ -92,11 +99,11 @@ class Perceptron(object):
 
     '''
     # Set the first layer (the input layer)'s "activation" to the input data
-    self.layers[0] = Layer(activated=X)
+    self.layers[0] = layer.Layer(activated=X)
 
     # Pass through each layer using inputs from previous layer
-    for i, layer in enumerate(self.layers[1:], start=1):
-      layer.forward(self.layers[i-1].a, batch_size)
+    for i, layer_ in enumerate(self.layers[1:], start=1):
+      layer_.forward(self.layers[i-1].a, batch_size)
   
   def backward(self, labels, lr, batch_size):
     '''
@@ -142,8 +149,8 @@ class Perceptron(object):
       Average loss (float), average accuracy (float)
 
     '''
-    loss = 0.0
-    acc = 0.0
+    loss_epoch = 0.0
+    acc_epoch = 0.0
     for i, (X, y) in enumerate(generator):
       self.forward(X, batch_size)
 
@@ -151,8 +158,8 @@ class Perceptron(object):
         self.backward(y, lr, batch_size)
 
       # Update accumulated measures
-      loss += self.loss_fn(self[-1].a, y)
-      acc += Loss.accuracy(self[-1].a, y)
+      loss_epoch += self.loss_fn(self[-1].a, y)
+      acc_epoch += loss.Loss.accuracy(self[-1].a, y)
 
     # Return average loss and accuracy over the number of batches done
-    return loss/(i+1), acc/(i+1)
+    return loss_epoch/(i+1), acc_epoch/(i+1)

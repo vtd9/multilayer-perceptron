@@ -1,4 +1,10 @@
 import numpy as np
+import os
+import sys
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(script_dir))
+import utility
 
 class Dataset(object):
   '''
@@ -28,7 +34,7 @@ class Dataset(object):
     self.y_test = None
 
     if make_y_one_hot:
-      self.y = Utility.make_one_hot(self.y)
+      self.y = utility.Utility.make_one_hot(self.y)
     if scale_X:
       self.X = self.X.astype('float64') / max_intensity
 

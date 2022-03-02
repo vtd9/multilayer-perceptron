@@ -2,6 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
+import os
+import sys
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(script_dir))
+import loss
+
 class Utility(object):
   '''
   Miscellaneous methods for training and plotting.
