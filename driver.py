@@ -4,7 +4,7 @@ import time
 sys.path.insert(0, r"C:\Users\RrbDellDesktop3\Documents\school\CS_637\hw1\mlp_api")
 from mlp_api import *
 
-# Test data
+# Test with dummy data
 width = 28
 categories = 10
 mnist_all_X = np.random.normal(size=(10, width, width))
