@@ -1,5 +1,4 @@
 import numpy as np
-import utility
 
 class Loss(object):
   '''
