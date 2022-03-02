@@ -6,8 +6,12 @@ import os
 import sys
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(script_dir))
-import loss
+sys.path.insert(0, os.path.dirname(script_dir))
+try:
+  import loss
+except:
+  sys.path.insert(0, r'/content/src/mlp-api/mlp_api')
+  import loss
 
 class Utility(object):
   '''
