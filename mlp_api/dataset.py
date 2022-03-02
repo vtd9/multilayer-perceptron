@@ -1,5 +1,4 @@
 import numpy as np
-from utility import Utility
 
 class Dataset(object):
   '''
