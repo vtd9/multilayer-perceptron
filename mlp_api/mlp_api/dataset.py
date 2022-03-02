@@ -1,14 +1,7 @@
 import numpy as np
-import os
-import sys
-
-script_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(script_dir))
-try:
-  import utility
-except:
-  sys.path.insert(0, r'/content/src/mlp-api/mlp_api')
-  import utility
+import os, sys
+sys.path.insert(0, os.path.join(os.getcwd() + r'/mlp_api/mlp_api'))
+import utility
 
 class Dataset(object):
   '''

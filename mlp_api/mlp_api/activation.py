@@ -40,7 +40,7 @@ class Activation(object):
       Activated or gradient value from applying sigmoid.
 
     '''
-    # Condition to prevent numerical overflow or divide by 0 with exponent
+    # Condition to help prevent numerical overflow or divide by 0 with exponent
     if not derive:
       if (x < threshold).any():
         return np.exp(x) / (np.exp(x) + 1)
@@ -51,10 +51,10 @@ class Activation(object):
 
 
   @staticmethod
-  def softmax(x):
+  def softmax(z, y=None, derive=False):
     '''
     Args:
-      x (ndarray): Input data to apply softmax on
+      x (ndarray): Input array to apply softmax on
 
     Returns: 
       Probabilities for a k-class classification so the sum for a given example
@@ -63,6 +63,17 @@ class Activation(object):
     '''
     # Update from using a naive implementation - prevent numerical overflows
     # by using shifting trick as opposed to np.exp(x)/np.sum(np.exp(x), axis=0)
-    shift = np.max(x)
-    exp_x = np.exp(x - shift)
-    return exp_x/np.sum(exp_x, axis=0)
+    shift = np.max(z)
+    exp_z = np.exp(z - shift)
+    yhat = exp_z/np.sum(exp_z, axis=0)
+    if not derive:
+      return yhat
+    else:
+      assert y is not None
+
+      # Need to know what class is the correct class
+      yhat_target = np.sum(np.where(y == 1, yhat, 0), axis=0)
+
+      # Derivative of softmax when i != j (where j is the target class) is
+      # -yhat_i*yhat_j. Derivative when i == j is yhat_j*(1 - yhat_j)
+      return np.where(y != 1, -yhat_target.T*yhat, yhat_target.T*(1 - yhat_target))

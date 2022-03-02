@@ -1,17 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-
-import os
-import sys
-
-script_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(script_dir))
-try:
-  import loss
-except:
-  sys.path.insert(0, r'/content/src/mlp-api/mlp_api')
-  import loss
+import os, sys
+sys.path.insert(0, os.path.join(os.getcwd() + r'/mlp_api/mlp_api'))
+import loss
 
 class Utility(object):
   '''
@@ -47,11 +39,10 @@ class Utility(object):
       print('Epoch \tTrain_loss \tTrain_acc')
 
     for epoch in range(epochs):
-      train_iter = dataset.make_batches(batch_size, group='train', 
-                                        shuffle_again=shuffle_every_epoch)
-      train_loss[epoch], train_acc[epoch] = mlp.train(train_iter, lr, 
-                                                      batch_size,
-                                                      train_mode=True)
+      train_iter = dataset.make_batches(batch_size, group='train',
+        shuffle_again=shuffle_every_epoch)
+      train_loss[epoch], train_acc[epoch] = mlp.train(train_iter, lr,
+        batch_size, train_mode=True)
       
       # If set to print out info as executing
       if verbose:

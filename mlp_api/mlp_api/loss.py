@@ -1,15 +1,7 @@
 import numpy as np
-import os
-import sys
-
-script_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(script_dir))
-
-try:
-  import utility
-except:
-  sys.path.insert(0, r'/content/src/mlp-api/mlp_api')
-  import utility
+import os, sys
+sys.path.insert(0, os.path.join(os.getcwd() + r'/mlp_api/mlp_api'))
+import activation, utility
 
 class Loss(object):
   '''
@@ -20,17 +12,17 @@ class Loss(object):
   @staticmethod
   def cross_entropy(yhat, y, epsilon=1e-5, derive=False):
     '''
-    Computes the cross-entropy loss or its gradient with respect to logits for 
-    a batch of predictions.util
+    Computes the cross-entropy loss or its derivative with respect to
+    the model outputs.
 
     Args:
       yhat (ndarray): Outputs (after activation) from a MLP
       y (ndarray): Actual labels to compare output with
       epsilon (float): Small positive value to prevent taking log of 0
-      derive (bool): True to return derivative wrt logits
+      derive (bool): True to return derivative wrt outputs
 
     Returns:
-      Cross-entropy loss value or its derivative wrt logits
+      Cross-entropy loss value or its derivative wrt outputs
 
     '''
     if not derive:
@@ -38,7 +30,7 @@ class Loss(object):
       # erroneously many zeros otherwise
       return np.average(np.sum(-y * np.log(yhat + epsilon), axis=0))
     else:
-      return yhat - y
+      return -y/yhat
 
   @staticmethod
   def hinge_loss(yhat, y, margin=1.0, derive=False):
