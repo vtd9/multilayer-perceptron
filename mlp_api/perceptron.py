@@ -1,6 +1,6 @@
 import numpy as np
-from layer import Layer
-from loss import Loss
+#from layer import Layer
+#from loss import Loss
 
 class Perceptron(object):
   '''
