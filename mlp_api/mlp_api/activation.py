@@ -51,7 +51,7 @@ class Activation(object):
       return Activation.sigmoid(z) * (1-Activation.sigmoid(z))
 
   @staticmethod
-  def identify(x, derive=False):
+  def identity(x, derive=False):
     '''
     Applies the identity function or its derivative on a set inputs.
 

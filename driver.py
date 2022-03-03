@@ -1,3 +1,7 @@
+'''
+Test some parts of the API with a Python script instead of a Jupyter notebook.
+'''
+
 import numpy as np
 import sys
 import gzip
@@ -35,18 +39,25 @@ def split_chain(mnist_set, mlp):
       deriv_softmax = mlp.activ_fns[-1](mlp.layers[-1].z, y1, derive=1)
       print(np.isclose(grad_chain * deriv_softmax, mlp[-1].a - y1).all())
 
-def train(mnist_set, width=28, batch=100, epochs=5):
+def train(mnist_set, width=28, batch=100, epochs=5, hinge_loss=True):
       # Test making a model
       dims = (width*width, 128, 64, 10)
       activ_fns = (Activation.relu, Activation.relu, Activation.softmax)
-      p_128_64 = Perceptron(dims, activ_fns, Loss.cross_entropy)
+
+      if hinge_loss:
+            p_128_64 = Perceptron(dims, activ_fns, Loss.hinge_loss)
+            use_logits = True
+      else:
+            p_128_64 = Perceptron(dims, activ_fns, Loss.cross_entropy)
+            use_logits = False
 
       # Different learning rates to test
       lr_results = {}
       lrs = (0.02, 0.01)
       for lr in lrs:
             p_128_64.reset() # Reinitialize parameters
-            lr_results[lr] = Utility.train_epochs(p_128_64, mnist_set, lr, epochs, batch)
+            lr_results[lr] = Utility.train_epochs(
+                  p_128_64, mnist_set, lr, epochs, batch, hinge_and_logits=use_logits)
 
 if __name__ == '__main__':
       mnist_set = make_dataset()

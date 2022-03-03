@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+
+# Import local package
 import os, sys
 sys.path.insert(0, os.path.join(os.getcwd() + r'/mlp_api/mlp_api'))
 import loss
@@ -12,10 +14,10 @@ class Utility(object):
   '''
 
   @staticmethod
-  def train_epochs(mlp, dataset, lr, epochs, batch_size,
-                   shuffle_every_epoch=True, verbose=True, hinge_and_logits=False):
+  def train_epochs(mlp, dataset, lr, epochs, batch_size, validate_too=True,
+    shuffle_every_epoch=True, verbose=True, hinge_and_logits=False):
     '''
-    Train a model over several epochs.
+    Train and validate a model over multiple epochs.
 
     Args:
       mlp: Perceptron object to train
@@ -23,21 +25,30 @@ class Utility(object):
       lr (float): Learning rate
       epochs (int): Number of epochs to train in
       batch_size (int): Batch size
-      shuffle_every_epoch (bool): True to reshuffle training and validation
-        data within their divisions when regenerating the batches
-      verbose (bool): True to print loss and accuracy values after each epoch
+      validate_too (bool): True to get validation loss & accuracy in the same epoch
+        after the parameters have been updated in training
+      shuffle_every_epoch (bool): True to reshuffle data within their divisions
+        when generating the batches
+      verbose (bool): True to print performance after each epoch
 
     Returns:
       Array of losses at each epoch, array of accuracy at each epoch
+      If validate_too is set, return validation losses and accuracy as well.
     
     '''
     assert (epochs > 0)
-
+    start_time = time.time()
     train_loss = np.empty(epochs)
     train_acc = np.empty(epochs)
-    start_time = time.time()
+    if validate_too:
+      valid_loss = np.empty(epochs)
+      valid_acc = np.empty(epochs)
+    
     if verbose:
-      print('Epoch \tTrain_loss \tTrain_acc')
+      if validate_too:
+        print('Epoch \tTrain loss \tTrain acc \tValid loss \t Valid acc')
+      else:
+        print('Epoch \tTrain loss \tTrain acc')
 
     for epoch in range(epochs):
       train_iter = dataset.make_batches(batch_size, group='train',
@@ -45,9 +56,21 @@ class Utility(object):
       train_loss[epoch], train_acc[epoch] = mlp.pass_data(train_iter, lr,
         batch_size, train_mode=True, hinge_and_logits=hinge_and_logits)
       
+      if validate_too:
+        valid_iter = dataset.make_batches(batch_size, group='valid',
+          shuffle_again=shuffle_every_epoch)
+        # Do not backpropagate during validation (train_mode=False)
+        valid_loss[epoch], valid_acc[epoch] = mlp.pass_data(valid_iter,
+          batch_size=batch_size, train_mode=False, hinge_and_logits=hinge_and_logits)
+      
       # If set to print out info as executing
       if verbose:
-        print('{} \t{:9.3f} \t{:9.3f}'.format(
+        if validate_too:
+          print('{} \t{:9.3f} \t{:9.3f} \t{:9.3f} \t{:9.3f}'.format(
+            epoch, train_loss[epoch], train_acc[epoch],
+            valid_loss[epoch], valid_acc[epoch]))
+        else:
+          print('{} \t{:9.3f} \t{:9.3f}'.format(
             epoch, train_loss[epoch], train_acc[epoch]))
       
       # Check for explosion or vanishing
@@ -57,8 +80,10 @@ class Utility(object):
     # Print amount of time taken
     print('Time elapsed (s): {:2.1f}\n'.format(time.time() - start_time))
 
-
-    return train_loss, train_acc
+    if validate_too:
+      return train_loss, train_acc, valid_loss, valid_acc
+    else:
+      return train_loss, train_acc
   
   @staticmethod
   def make_one_hot(y):
@@ -91,14 +116,17 @@ class Utility(object):
     return np.argmax(y, axis=0)
 
   @staticmethod
-  def plot_results(results, labels=None, fmts=None, xlabel='Epoch', ylabel='',
-                   ymax=None, title=''):
+  def plot_results(results, valid_results=None, labels=None, label_append='',
+    fmts=None, valid_fmt='--', valid_append=' validation', xlabel='Epoch', 
+    ylabel='', ymax=None, title='', legend_cols=2, show=False):
     
     '''
     Plot one or more results
 
     Args:
-      results (list or tuple): Container of ndarray results to plot
+      results (list or tuple): Container of ndarray to plot
+      valid_results (list or tuple): Contain of ndarrays to plot and distinguish 
+        in addition to the results
       labels (list or tuple): Container of strings, each a label corresponding
         to each result to be displayed in the legend
       fmts (list or tuple): Container of strings matching the matplotlib's
@@ -123,15 +151,24 @@ class Utility(object):
 
     # Plot each set of results with its corresponding label and format
     for result, label, fmt in zip(results, labels, fmts):
-      plt.plot(np.arange(result.shape[0]), result, fmt, label=label)
+      plt.plot(np.arange(result.shape[0]), result, fmt, label=label + label_append)
+    
+    # Plot validation results on top the results, if provided
+    if valid_results is not None:
+      for valid_result, label in zip(valid_results, labels):
+        plt.plot(np.arange(valid_result.shape[0]), 
+          valid_result, valid_fmt, label=label + valid_append)
 
     # Parameters affecting entire plot
-    plt.legend(framealpha=0.5)
+    plt.legend(framealpha=0.5, ncol=legend_cols)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)  
     if ymax is not None:
       plt.ylim(0, ymax)
+    # For running in native Python, not a notebook
+    if show:
+      plt.show()
 
   @staticmethod
   def plot_images(data, images=3, show_random=False, mlp=None, cols=5,
@@ -167,8 +204,8 @@ class Utility(object):
     for i in range(images):  
       plt.subplot(np.ceil(images/cols).astype(int), cols, i + 1)
       plt.axis('off')
-      plt.imshow(sample_X[:, i].reshape(width, width), 
-                 cmap=plt.get_cmap('gray'))
+      plt.imshow(sample_X[:, i].reshape(width, width),
+        cmap=plt.get_cmap('gray'))
       
       # Title each image with its true label      
       if mlp is not None:
@@ -178,5 +215,6 @@ class Utility(object):
 
     plt.subplots_adjust(hspace=1.0)
     
+    # For running in native Python, not a notebook
     if show:
       plt.show()

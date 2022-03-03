@@ -1,4 +1,6 @@
 import numpy as np
+
+# Import local package
 import os, sys
 sys.path.insert(0, os.path.join(os.getcwd() + r'/mlp_api/mlp_api'))
 import layer, loss

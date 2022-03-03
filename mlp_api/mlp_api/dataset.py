@@ -1,5 +1,7 @@
 import numpy as np
 import os, sys
+
+from pyrsistent import v
 sys.path.insert(0, os.path.join(os.getcwd() + r'/mlp_api/mlp_api'))
 import utility
 
@@ -115,6 +117,10 @@ class Dataset(object):
     else:
       raise ValueError('Incorrect argument for group! Choose between train, '
                        'validate, or test.')
+
+    # Check group divisible by batch size requested
+    if X_select.shape[-1] % batch_size != 0:
+      raise Exception('Group not divisible by batch size! Choose another batch size.')
 
     # Shuffle within the group, if specified
     if shuffle_again:
