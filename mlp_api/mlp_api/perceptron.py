@@ -101,7 +101,7 @@ class Perceptron(object):
     for i, layer_ in enumerate(self.layers[1:], start=1):
       layer_.forward(self.layers[i-1].a, batch_size)
   
-  def backward(self, labels, lr, batch_size):
+  def backward(self, labels, lr, batch_size, hinge_and_logits=False):
     '''
     Backpropagates from loss and adjust parameters after a forward pass.
     
@@ -111,9 +111,20 @@ class Perceptron(object):
       batch_size (int): Batch size
     
     '''
-    # Calculate derivative of loss wrt logits
-    grad_chain = self.loss_fn(self.layers[-1].a, labels, derive=True)
+    # Calculate derivative of the chosen loss function wrt outputs
+    # If hinge loss applied on logits (before output activation), use appropriate z
+    if (hinge_and_logits):
+      assert 'hinge_loss' in str(self.loss_fn)
+      grad_chain = self.loss_fn(self.layers[-1].z, labels, derive=True)
+    else:
+      grad_chain = self.loss_fn(self.layers[-1].a, labels, derive=True)
 
+      # If activation was softmax, need to provide labels, too
+      if 'softmax' in str(self.activ_fns[-1]):
+        grad_chain = grad_chain * self.activ_fns[-1](self.layers[-1].z, labels, derive=True)
+      else:
+        grad_chain = grad_chain * self.activ_fns[-1](self.layers[-1].z, derive=True)
+    
     for i in range(self.n_layers - 1, 0, -1):
       # Save current weight for dloss/da of the previous layer later
       prev_a = self.layers[i-1].a
@@ -131,15 +142,17 @@ class Perceptron(object):
         da_dz = self.layers[i-1].activ_fun(prev_a, derive=True)
       else: # Don't need to derive the input layer
         break
+      grad_chain *= da_dz
   
-  def train(self, generator, lr=0.001, batch_size=100, train_mode=True):
+  def pass_data(self, generator, lr=0.001, batch_size=100, train_mode=True,
+    hinge_and_logits=False):
     '''
-    Train for a single epoch.
+    Pass data through the model in a single epoch.
 
     Args:
       generator (generator): Generator to loop through one batch at a time
       lr (float): Learning rate
-      train_mode (bool): True to backpropagate and update parameters
+      train_mode (bool): True to backpropagate and update parameters in training
     
     Returns:
       Average loss (float), average accuracy (float)
@@ -151,7 +164,7 @@ class Perceptron(object):
       self.forward(X, batch_size)
 
       if train_mode: # Adjust parameters only during training
-        self.backward(y, lr, batch_size)
+        self.backward(y, lr, batch_size, hinge_and_logits)
 
       # Update accumulated measures
       loss_epoch += self.loss_fn(self[-1].a, y)

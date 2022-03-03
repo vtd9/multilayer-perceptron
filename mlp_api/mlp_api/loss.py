@@ -1,7 +1,7 @@
 import numpy as np
 import os, sys
 sys.path.insert(0, os.path.join(os.getcwd() + r'/mlp_api/mlp_api'))
-import activation, utility
+import utility
 
 class Loss(object):
   '''
@@ -30,15 +30,17 @@ class Loss(object):
       # erroneously many zeros otherwise
       return np.average(np.sum(-y * np.log(yhat + epsilon), axis=0))
     else:
-      return -y/yhat
+      # Squash active yhat values down by summing down the columns
+      return np.sum(-y / yhat, axis=0).reshape(-1, 1).T
 
   @staticmethod
-  def hinge_loss(yhat, y, margin=1.0, derive=False):
+  def hinge_loss(z, y, margin=1.0, derive=False):
     '''
     Computes the hinge loss or its derivative for a batch of predictions.
 
     Args:
-      yhat (ndarray): Outputs (after activation) from a MLP
+      z (ndarray): Logits (outputs before softmax) from a MLP, or otherwise
+        any output to measure the performance of
       y (ndarray): Actual labels to compare output with
       margin (float): Margin for target class value to overtake
       derive (bool): True to return derivative
@@ -49,20 +51,20 @@ class Loss(object):
     '''
     # Output of the target class for each example
     # Repeat so same value going down row to get same shape as yhat
-    y_target = np.sum(np.where(y == 1, yhat, 0), axis=0)
+    y_target = np.sum(np.where(y == 1, z, 0), axis=0)
 
     # Get distances from outputs at indexes != target class
     # Add margin to elements at indexes != target class
-    dist = np.where(y == 1, 0, yhat - y_target + margin)
+    dist = np.where(y == 1, 0, z - y_target + margin)
 
     if not derive:
       # Get the positive differences over each example (zero-threshold)
       pos_per_example = np.where(dist > 0, dist, 0)
 
-      # Sum over each example, average over all batches
-      return np.sum(np.sum(pos_per_example, axis=0))
+      # Sum over each example, average over all data points
+      return np.average(np.sum(pos_per_example, axis=0))
     else:
-      return
+      return np.where(y == 1, -np.sum(dist > 0, axis=0), dist > 0)
   
   @staticmethod
   def accuracy(yhat, y, y_one_hot=True, return_predict=False):

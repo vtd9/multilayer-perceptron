@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 import gzip
-sys.path.insert(0, r"C:\Users\RrbDellDesktop3\Documents\school\CS_637\hw1\mlp_api")
+sys.path.insert(0, r"\mlp_api")
 from mlp_api import *
 
 def read_gz(file, img_size=28, labels=False):
@@ -26,27 +26,32 @@ def make_dataset(width=28):
       mnist_set.shape(width, 10)
       return mnist_set
 
+def split_chain(mnist_set, mlp):
+      # Fix chaining
+      train_batches = mnist_set.make_batches(2)
+      X1, y1 = next(train_batches)
+      mlp.forward(X1, 2)
+      grad_chain = mlp.loss_fn(mlp[-1].a, y1, derive=1)
+      deriv_softmax = mlp.activ_fns[-1](mlp.layers[-1].z, y1, derive=1)
+      print(np.isclose(grad_chain * deriv_softmax, mlp[-1].a - y1).all())
+
+def train(mnist_set, width=28, batch=100, epochs=5):
+      # Test making a model
+      dims = (width*width, 128, 64, 10)
+      activ_fns = (Activation.relu, Activation.relu, Activation.softmax)
+      p_128_64 = Perceptron(dims, activ_fns, Loss.cross_entropy)
+
+      # Different learning rates to test
+      lr_results = {}
+      lrs = (0.02, 0.01)
+      for lr in lrs:
+            p_128_64.reset() # Reinitialize parameters
+            lr_results[lr] = Utility.train_epochs(p_128_64, mnist_set, lr, epochs, batch)
+
 if __name__ == '__main__':
-      width = 28
       mnist_set = make_dataset()
       mnist_set.shuffle()
       mnist_set.divide()
       print('Splits on training, validation, and testing:', 
             mnist_set.X_train.shape, mnist_set.X_valid.shape, mnist_set.X_test.shape)   
-
-      # Test making a model
-      batch = 100
-      epochs = 10
-      dims = (width*width, 128, 64, 10)
-      activ_fns = (Activation.relu, Activation.relu, Activation.softmax)
-
-      # Make a generic neural network with two hidden layers
-      p_128_64 = Perceptron(dims, activ_fns, Loss.cross_entropy)
-
-      # Different learning rates to test
-      lr_results = {}
-      lrs = (5e-4, 0.002, 0.01)
-      for lr in lrs:
-            p_128_64.reset() # Reinitialize parameters
-            lr_results[lr] = Utility.train_epochs(p_128_64, mnist_set, lr, epochs, batch)
-            break # TEMP
+      train(mnist_set)

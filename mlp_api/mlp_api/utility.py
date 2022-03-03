@@ -13,7 +13,7 @@ class Utility(object):
 
   @staticmethod
   def train_epochs(mlp, dataset, lr, epochs, batch_size,
-                   shuffle_every_epoch=True, verbose=True):
+                   shuffle_every_epoch=True, verbose=True, hinge_and_logits=False):
     '''
     Train a model over several epochs.
 
@@ -32,6 +32,7 @@ class Utility(object):
     
     '''
     assert (epochs > 0)
+
     train_loss = np.empty(epochs)
     train_acc = np.empty(epochs)
     start_time = time.time()
@@ -41,8 +42,8 @@ class Utility(object):
     for epoch in range(epochs):
       train_iter = dataset.make_batches(batch_size, group='train',
         shuffle_again=shuffle_every_epoch)
-      train_loss[epoch], train_acc[epoch] = mlp.train(train_iter, lr,
-        batch_size, train_mode=True)
+      train_loss[epoch], train_acc[epoch] = mlp.pass_data(train_iter, lr,
+        batch_size, train_mode=True, hinge_and_logits=hinge_and_logits)
       
       # If set to print out info as executing
       if verbose:
@@ -50,7 +51,7 @@ class Utility(object):
             epoch, train_loss[epoch], train_acc[epoch]))
       
       # Check for explosion or vanishing
-      if np.isnan(train_loss[epoch]) or np.isinf(train_loss[epoch]):      
+      if np.isnan(train_loss[epoch]) or np.isinf(train_loss[epoch]):
         raise Exception('Loss has become NaN or infinity! Stop training.')
 
     # Print amount of time taken

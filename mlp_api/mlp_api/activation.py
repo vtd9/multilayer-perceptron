@@ -7,7 +7,7 @@ class Activation(object):
   '''
 
   @staticmethod
-  def relu(x, derive=False):
+  def relu(z, derive=False):
     '''
     Applies ReLU or its derivative on an input.
     
@@ -20,12 +20,13 @@ class Activation(object):
 
     '''
     if not derive:
-      return np.maximum(x, 0., x)
+      # Third argument modifies in place
+      return np.maximum(z, 0., z) 
     else:
-      return (x > 0).astype(int)
+      return (z > 0).astype(int)
   
   @staticmethod
-  def sigmoid(x, derive=False, threshold=-100.0):
+  def sigmoid(z, derive=False, threshold=-100.0):
     '''
     Applies sigmoid or its deriative on an input.
 
@@ -37,35 +38,57 @@ class Activation(object):
         formulation to help prevent overflow.
 
     Returns:
-      Activated or gradient value from applying sigmoid.
+      Activated or gradient value from applying sigmoid
 
     '''
     # Condition to help prevent numerical overflow or divide by 0 with exponent
     if not derive:
-      if (x < threshold).any():
-        return np.exp(x) / (np.exp(x) + 1)
+      if (z < threshold).any():
+        return np.exp(z) / (np.exp(z) + 1)
       else:
-        return 1 / (1 + np.exp(-x))
+        return 1 / (1 + np.exp(-z))
     else:
-      return Activation.sigmoid(x) * (1-Activation.sigmoid(x))
+      return Activation.sigmoid(z) * (1-Activation.sigmoid(z))
 
+  @staticmethod
+  def identify(x, derive=False):
+    '''
+    Applies the identity function or its derivative on a set inputs.
+
+    Args:
+      x (ndarray): Input data to apply sigmoid on
+      derive (bool): True to take derivative of sigmoid wrt to X
+    
+    Returns:
+      Same input ("activated") or gradient value from applying the identity function    
+
+    '''
+    if not derive:
+      return x
+    else:
+      return 1
 
   @staticmethod
   def softmax(z, y=None, derive=False):
     '''
+    Applies softmax or its derivative on a set of inputs, typically 
+    the aggregates from the last layer.
+
     Args:
-      x (ndarray): Input array to apply softmax on
+      z (ndarray): Input array to apply softmax on
+      derive (bool): True to take derivative of sigmoid wrt to z
 
     Returns: 
       Probabilities for a k-class classification so the sum for a given example
-      over all classes = 1.0
+      over all classes = 1.0, or the gradient of softmax
       
     '''
     # Update from using a naive implementation - prevent numerical overflows
-    # by using shifting trick as opposed to np.exp(x)/np.sum(np.exp(x), axis=0)
+    # by using 'shifting' trick as opposed to np.exp(x)/np.sum(np.exp(x), axis=0)
     shift = np.max(z)
     exp_z = np.exp(z - shift)
     yhat = exp_z/np.sum(exp_z, axis=0)
+
     if not derive:
       return yhat
     else:

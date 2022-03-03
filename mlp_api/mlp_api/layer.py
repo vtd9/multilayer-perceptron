@@ -10,7 +10,7 @@ class Layer(object):
   '''
 
   def __init__(self, in_dim=1, out_dim=1, activ_fun=None, init_with_normal=True, 
-               mean=0, var=0.055, min=-0.1, max=0.1, activated=None):
+               mean=0, var=0.05, min=-0.1, max=0.1, activated=None):
     '''
     Constructs a new Layer object.
 
