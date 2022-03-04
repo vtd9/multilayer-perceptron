@@ -1,7 +1,5 @@
 import numpy as np
 import os, sys
-
-from pyrsistent import v
 sys.path.insert(0, os.path.join(os.getcwd() + r'/mlp_api/mlp_api'))
 import utility
 
@@ -10,8 +8,7 @@ class Dataset(object):
   Represents a set of data with methods to reshape, split, and train.
 
   '''
-  def __init__(self, X, y, make_y_one_hot=True, scale_X=True, 
-               max_intensity=255.):
+  def __init__(self, X, y, make_y_one_hot=True, scale_X=True, max_intensity=255.):
     '''
     Constructs a Dataset object.
     
@@ -20,8 +17,11 @@ class Dataset(object):
       y (ndarray): Labels corresponding to input data
       make_y_one_hot (bool): True to convert the labels into a one-hot 
         representation, if not done already; false to skip this step
-      scale_X (bool): True to convert image inputs to be between 0 and 1
-      max_intensity (float): Maximum intensity of input. Default = 255.
+      scale_X (bool): True to convert image inputs to be between 0 and 1;
+        false to leave the input unchanged
+      max_intensity (float): Maximum intensity of input. Default = 255,
+        denoting the pixel is showing maximum light
+
     '''
     self.X = X
     self.y = y.astype('int32')
@@ -42,10 +42,10 @@ class Dataset(object):
     Reshapes the input and output data.
 
     Args:
-      features: Number of features in the input data. Set to width of a 2D image
+      features (int): Number of features in the input data. Set to width of a 2D image
         if it will be flattened.
-      categories: Number of categories in the classification problem
-      flatten_X: True to flatten a 2D image into a 1D array
+      categories (int): Number of categories in the classification problem
+      flatten_X (bool): True to flatten a 2D image into a 1D array
 
     '''
     if flatten_X: 
@@ -66,7 +66,7 @@ class Dataset(object):
 
   def divide(self, p_train=70, p_valid=15, p_test=15):
     '''
-    Divide the loaded data into sets for training, validation, and testing.
+    Divide the loaded data into groups for training, validation, and testing.
 
     Args:
       p_train (int): Percentage of data to allot for training
@@ -101,7 +101,7 @@ class Dataset(object):
       batch_size (int): Batch size to divide data into
       group (str): Either train, valid, or test to select group
       shuffle_again (bool): True to shuffle data within its group when 
-        a new set of batches is made
+        a new set of batches is made, false to leave the ordering unchanged
 
     Returns:
       Generator of batches in the specified size from the specified group.

@@ -74,11 +74,14 @@ class Loss(object):
     Args:
       yhat (ndarray): Outputs (after activation) from a MLP
       y (ndarray): Actual labels to compare output with
-      y_one_hot: True if y given in one-hot form, false if given as a list 
+      y_one_hot (bool): True if y given in one-hot form, false if given as a list 
         of correct indexes
+      return_predict (bool): True to return the actual predictions based on maximum
+        outputs rather than the accuracy itself
 
     Returns:
-      Accuracy of a given output against its true values
+      Accuracy of a given output against its true values, or the array of 
+      predicted classes
 
     '''
     # Prediction class is the one with max predicted probability in each example

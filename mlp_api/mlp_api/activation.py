@@ -13,7 +13,7 @@ class Activation(object):
     
     Args:
       x (ndarray): Input data to apply ReLU on
-      derive (bool): True to take derivative of ReLU wrt to X
+      derive (bool): True to take derivative of ReLU wrt to x
 
     Returns:
       Activated or gradient value from applying ReLU.
@@ -32,7 +32,7 @@ class Activation(object):
 
     Args:
       x (ndarray): Input data to apply sigmoid on
-      derive (bool): True to take derivative of sigmoid wrt to X
+      derive (bool): True to take derivative of sigmoid wrt to x
       threshold (float): Minimum threshold to use the first formulation of
         sigmoid for. If any of the inputs are less than this, use second
         formulation to help prevent overflow.
@@ -56,8 +56,8 @@ class Activation(object):
     Applies the identity function or its derivative on a set inputs.
 
     Args:
-      x (ndarray): Input data to apply sigmoid on
-      derive (bool): True to take derivative of sigmoid wrt to X
+      x (ndarray): Input data to apply the activation on
+      derive (bool): True to take derivative of the identity function wrt to x
     
     Returns:
       Same input ("activated") or gradient value from applying the identity function    

@@ -28,8 +28,10 @@ class Utility(object):
       validate_too (bool): True to get validation loss & accuracy in the same epoch
         after the parameters have been updated in training
       shuffle_every_epoch (bool): True to reshuffle data within their divisions
-        when generating the batches
+        when generating the batches, false to keep the data ordering constant
       verbose (bool): True to print performance after each epoch
+      hinge_and_logits (bool): True to apply hinge loss on the logits, not the final
+        output from the network; false otherwise
 
     Returns:
       Array of losses at each epoch, array of accuracy at each epoch
@@ -63,7 +65,7 @@ class Utility(object):
         valid_loss[epoch], valid_acc[epoch] = mlp.pass_data(valid_iter,
           batch_size=batch_size, train_mode=False, hinge_and_logits=hinge_and_logits)
       
-      # If set to print out info as executing
+      # If verbose set to print out info as executing
       if verbose:
         if validate_too:
           print('{} \t{:9.3f} \t{:9.3f} \t{:9.3f} \t{:9.3f}'.format(
@@ -121,7 +123,7 @@ class Utility(object):
     ylabel='', ymax=None, title='', legend_cols=2, show=False):
     
     '''
-    Plot one or more results
+    Plot one or more results together.
 
     Args:
       results (list or tuple): Container of ndarray to plot
@@ -129,13 +131,22 @@ class Utility(object):
         in addition to the results
       labels (list or tuple): Container of strings, each a label corresponding
         to each result to be displayed in the legend
-      fmts (list or tuple): Container of strings matching the matplotlib's
+      label_append (str): Optional string to append each label with
+      fmts (list or tuple): Optional container of strings matching the matplotlib's
         line, color, and marker styles. None to use default
+      valid_fmt (str): String to control the appearance of the validation results
+        in the plot
+      valid_append (str): String to append each validation label with, if any
+        validation results are provided that need to be distinguished from another
+        set of results
       xlabel (str): Label on x-axis
       ylabel (str): Label on y-axis
       ymax (float): Maximum bound to set y-axis to. None to use automatic
         settings
       title (str): Title of plot
+      legend_cols (int): Number of columns the legend should be split into
+      show (bool): True to explicitly show the plot, as in running a Python script
+        with this API as opposed to a Jupyter notebook
 
     '''
     # Account for arguments not given
@@ -171,25 +182,27 @@ class Utility(object):
       plt.show()
 
   @staticmethod
-  def plot_images(data, images=3, show_random=False, mlp=None, cols=5,
+  def plot_images(data, num_images=3, show_random=False, mlp=None, cols=5,
                   show=False):
     '''
     Plot using the flattened representation of a square image in input X.
 
     Args:
       data: Dataset object to select a random sample from
-      images (int): Number of images to sample and show
+      images (int): Number of images to sample and visualize
+      show_random (bool): True to take a random sample of the dataset to visualize,
+        false to take the first "images" images
       mlp: Perceptron object to pass images through. None to not make any
         predictions and just show the true labels instead.
       cols (int): Number of columns to arrange images in
-      show (bool): True to explicitly call plt.show() - do not need to set
-        if running in a Jupyter notebook
+      show (bool): True to explicitly call plt.show(), as when running a Python script
+        as opposed to a Jupyter notebook.
 
     '''
     if show_random: # Get random sample from dataset
-      indexes = np.random.randint(0, data.X.shape[-1], images)
+      indexes = np.random.randint(0, data.X.shape[-1], num_images)
     else: # Get first images in range from dataset
-      indexes = tuple(range(images))
+      indexes = tuple(range(num_images))
 
     sample_X, sample_y = data.X[:, indexes], data.y[:, indexes]
     sample_y = Utility.reverse_one_hot(sample_y)
@@ -201,8 +214,8 @@ class Utility(object):
 
     # Display data as images
     width = int(data.X.shape[0]**0.5)
-    for i in range(images):  
-      plt.subplot(np.ceil(images/cols).astype(int), cols, i + 1)
+    for i in range(num_images):  
+      plt.subplot(np.ceil(num_images/cols).astype(int), cols, i + 1)
       plt.axis('off')
       plt.imshow(sample_X[:, i].reshape(width, width),
         cmap=plt.get_cmap('gray'))

@@ -51,7 +51,12 @@ class Perceptron(object):
     Initialize parameters in the MLP.
 
     Args:
-
+      init_with_normal (bool): True to initialize parameters by sampling from a 
+        normal distribution, false to sample from a uniform one
+      mean (float): Mean to use if initializing with a normal dist
+      var (float): Variance to use if initializing with a normal dist
+      min (float): Minimum bound to use if initializing with a uniform dist
+      max (float): Minimum bound to use if initializing with a uniform dist
 
     '''
     self.layers = [None] * len(self.dims)
@@ -99,7 +104,7 @@ class Perceptron(object):
     # Set the first layer (the input layer)'s "activation" to the input data
     self.layers[0] = layer.Layer(activated=X)
 
-    # Pass through each layer using inputs from previous layer
+    # Pass through each layer using inputs from the previous layer
     for i, layer_ in enumerate(self.layers[1:], start=1):
       layer_.forward(self.layers[i-1].a, batch_size)
   
@@ -111,6 +116,8 @@ class Perceptron(object):
       labels (ndarray): True labels in a one-hot representation
       lr (float): Learning rate
       batch_size (int): Batch size
+      hinge_and_logits (bool): True if applying hinge loss on the logits, false
+        otherwise
     
     '''
     # Calculate derivative of the chosen loss function wrt outputs
@@ -154,7 +161,11 @@ class Perceptron(object):
     Args:
       generator (generator): Generator to loop through one batch at a time
       lr (float): Learning rate
-      train_mode (bool): True to backpropagate and update parameters in training
+      batch_size (int): Batch size
+      train_mode (bool): True to backpropagate and update parameters,
+        false to pass data forward
+      hinge_and_logits (bool): True to apply hinge loss on the logits, not the final
+        output from the network; false otherwise
     
     Returns:
       Average loss (float), average accuracy (float)
