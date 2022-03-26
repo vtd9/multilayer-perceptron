@@ -1,41 +1,68 @@
+'''
+Test some parts of the API with a Python script instead of a Jupyter notebook.
+'''
+
 import numpy as np
 import sys
-import time
-sys.path.insert(0, r"C:\Users\RrbDellDesktop3\Documents\school\CS_637\hw1\mlp_api")
+import gzip
+sys.path.insert(0, r"\mlp_api")
 from mlp_api import *
 
-# Test with dummy data
-width = 28
-categories = 10
-mnist_all_X = np.random.normal(size=(10, width, width))
-mnist_all_y = np.arange(10)
+def read_gz(file, img_size=28, labels=False):
+    f = gzip.open(file,'r')
+    if labels:
+        f.read(8)
+        buffer = f.read()
+        return np.frombuffer(buffer, dtype=np.uint8)
+    else:
+        f.read(16)
+        buffer = f.read()
+        return np.frombuffer(buffer, dtype=np.uint8).reshape(-1, img_size, img_size)
 
-mnist_set = Dataset(mnist_all_X, mnist_all_y)
-mnist_set.shape(width, 10)
-#Utility.plot_images(mnist_set, 5, show=True)
+def make_dataset(width=28):
+      train_X = read_gz('mnist/train-images-idx3-ubyte.gz')
+      train_y = read_gz('mnist/train-labels-idx1-ubyte.gz', labels=True)
+      test_X = read_gz('mnist/t10k-images-idx3-ubyte.gz')
+      test_y = read_gz('mnist/t10k-labels-idx1-ubyte.gz', labels=True)
+      mnist_all_X = np.concatenate((train_X, test_X), axis=0)
+      mnist_all_y = np.concatenate((train_y, test_y), axis=0)
+      mnist_set = Dataset(mnist_all_X, mnist_all_y)
+      mnist_set.shape(width, 10)
+      return mnist_set
 
-print(mnist_set.X.shape[-1], mnist_set.y.shape[-1])
-mnist_set.shuffle()
-mnist_set.divide()
-print('Splits on training, validation, & testing:', 
-      mnist_set.X_train.shape, mnist_set.X_valid.shape, mnist_set.X_test.shape)
+def split_chain(mnist_set, mlp):
+      # Fix chaining
+      train_batches = mnist_set.make_batches(2)
+      X1, y1 = next(train_batches)
+      mlp.forward(X1, 2)
+      grad_chain = mlp.loss_fn(mlp[-1].a, y1, derive=1)
+      deriv_softmax = mlp.activ_fns[-1](mlp.layers[-1].z, y1, derive=1)
+      print(np.isclose(grad_chain * deriv_softmax, mlp[-1].a - y1).all())
 
+def train(mnist_set, width=28, batch=100, epochs=5, hinge_loss=True):
+      # Test making a model
+      dims = (width*width, 128, 64, 10)
+      activ_fns = (Activation.relu, Activation.relu, Activation.softmax)
 
-# Test making a model
-# Hyperparameters to use throughout all models
-batch = 1
-epochs = 10
+      if hinge_loss:
+            p_128_64 = Perceptron(dims, activ_fns, Loss.hinge_loss)
+            use_logits = True
+      else:
+            p_128_64 = Perceptron(dims, activ_fns, Loss.cross_entropy)
+            use_logits = False
 
-dims = (width*width, 128, 64, 10)
-activ_fns = (Activation.relu, Activation.relu, Activation.softmax)
+      # Different learning rates to test
+      lr_results = {}
+      lrs = (0.02, 0.01)
+      for lr in lrs:
+            p_128_64.reset() # Reinitialize parameters
+            lr_results[lr] = Utility.train_epochs(
+                  p_128_64, mnist_set, lr, epochs, batch, hinge_and_logits=use_logits)
 
-# Make a generic neural network with two hidden layers
-p_128_64 = Perceptron(dims, activ_fns, Loss.cross_entropy)
-
-# Different learning rates to test
-lr_results = {}
-lrs = (5e-4, 0.002, 0.01)
-for lr in lrs:
-  p_128_64.reset() # Reinitialize parameters
-  lr_results[lr] = Utility.train_epochs(p_128_64, mnist_set, 
-                                              lr, epochs, batch)
+if __name__ == '__main__':
+      mnist_set = make_dataset()
+      mnist_set.shuffle()
+      mnist_set.divide()
+      print('Splits on training, validation, and testing:', 
+            mnist_set.X_train.shape, mnist_set.X_valid.shape, mnist_set.X_test.shape)   
+      train(mnist_set)

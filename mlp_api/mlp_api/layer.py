@@ -10,7 +10,7 @@ class Layer(object):
   '''
 
   def __init__(self, in_dim=1, out_dim=1, activ_fun=None, init_with_normal=True, 
-               mean=0, var=0.055, min=-0.1, max=0.1, activated=None):
+               mean=0, var=0.05, min=-0.1, max=0.1, activated=None):
     '''
     Constructs a new Layer object.
 
@@ -49,11 +49,13 @@ class Layer(object):
     Initialize parameters by sampling from a normal distribution.
 
     Args:
-
+      in_dim (int): Dimension of inputs to this layer
+      out_dim (int): Dimension of outputs from this layer
+      mean (float): Mean of normal distribution sampling from
+      var (float): Variance of normal distribution sampling from
+      bias (bool): True to initialize the bias
 
     '''
-    # If variance not set, use Kaiming's initializaion with fan-in
-
     # Initialize weights or bias
     if bias:
       self.b = np.random.normal(mean, var**0.5, (out_dim, in_dim))
@@ -65,6 +67,10 @@ class Layer(object):
     Initialize parameters by sampling from a uniform distribution.
 
     Args:
+      in_dim (int): Dimension of inputs to this layer
+      out_dim (int): Dimension of outputs from this layer
+      min (float): Minimum bound to sample from
+      max (float): Maximum bound to sample from
 
     '''
     if bias:
@@ -98,7 +104,8 @@ class Layer(object):
     Args:
       prev_a (ndarray): Activation from the previous layer
       grad_chain (ndarray): Backpropagated chain of derivatives so far
-      lr: Learning rate
+      lr (float): Learning rate
+      batch_size (int): Batch size
 
     '''
     # Normalize magnitude of adjustment with batch size

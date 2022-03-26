@@ -1,16 +1,9 @@
 import numpy as np
-import os
-import sys
-script_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(script_dir))
 
-try:
-  import layer
-  import loss
-except:
-  sys.path.insert(0, r'/content/src/mlp-api/mlp_api')
-  import layer
-  import loss
+# Import local package
+import os, sys
+sys.path.insert(0, os.path.join(os.getcwd() + r'/mlp_api/mlp_api'))
+import layer, loss
 
 class Perceptron(object):
   '''
@@ -58,7 +51,12 @@ class Perceptron(object):
     Initialize parameters in the MLP.
 
     Args:
-
+      init_with_normal (bool): True to initialize parameters by sampling from a 
+        normal distribution, false to sample from a uniform one
+      mean (float): Mean to use if initializing with a normal dist
+      var (float): Variance to use if initializing with a normal dist
+      min (float): Minimum bound to use if initializing with a uniform dist
+      max (float): Minimum bound to use if initializing with a uniform dist
 
     '''
     self.layers = [None] * len(self.dims)
@@ -106,11 +104,11 @@ class Perceptron(object):
     # Set the first layer (the input layer)'s "activation" to the input data
     self.layers[0] = layer.Layer(activated=X)
 
-    # Pass through each layer using inputs from previous layer
+    # Pass through each layer using inputs from the previous layer
     for i, layer_ in enumerate(self.layers[1:], start=1):
       layer_.forward(self.layers[i-1].a, batch_size)
   
-  def backward(self, labels, lr, batch_size):
+  def backward(self, labels, lr, batch_size, hinge_and_logits=False):
     '''
     Backpropagates from loss and adjust parameters after a forward pass.
     
@@ -118,11 +116,24 @@ class Perceptron(object):
       labels (ndarray): True labels in a one-hot representation
       lr (float): Learning rate
       batch_size (int): Batch size
+      hinge_and_logits (bool): True if applying hinge loss on the logits, false
+        otherwise
     
     '''
-    # Calculate derivative of loss wrt logits
-    grad_chain = self.loss_fn(self.layers[-1].a, labels, derive=True)
+    # Calculate derivative of the chosen loss function wrt outputs
+    # If hinge loss applied on logits (before output activation), use appropriate z
+    if (hinge_and_logits):
+      assert 'hinge_loss' in str(self.loss_fn)
+      grad_chain = self.loss_fn(self.layers[-1].z, labels, derive=True)
+    else:
+      grad_chain = self.loss_fn(self.layers[-1].a, labels, derive=True)
 
+      # If activation was softmax, need to provide labels, too
+      if 'softmax' in str(self.activ_fns[-1]):
+        grad_chain = grad_chain * self.activ_fns[-1](self.layers[-1].z, labels, derive=True)
+      else:
+        grad_chain = grad_chain * self.activ_fns[-1](self.layers[-1].z, derive=True)
+    
     for i in range(self.n_layers - 1, 0, -1):
       # Save current weight for dloss/da of the previous layer later
       prev_a = self.layers[i-1].a
@@ -140,15 +151,21 @@ class Perceptron(object):
         da_dz = self.layers[i-1].activ_fun(prev_a, derive=True)
       else: # Don't need to derive the input layer
         break
+      grad_chain *= da_dz
   
-  def train(self, generator, lr=0.001, batch_size=100, train_mode=True):
+  def pass_data(self, generator, lr=0.001, batch_size=100, train_mode=True,
+    hinge_and_logits=False):
     '''
-    Train for a single epoch.
+    Pass data through the model in a single epoch.
 
     Args:
       generator (generator): Generator to loop through one batch at a time
       lr (float): Learning rate
-      train_mode (bool): True to backpropagate and update parameters
+      batch_size (int): Batch size
+      train_mode (bool): True to backpropagate and update parameters,
+        false to pass data forward
+      hinge_and_logits (bool): True to apply hinge loss on the logits, not the final
+        output from the network; false otherwise
     
     Returns:
       Average loss (float), average accuracy (float)
@@ -160,7 +177,7 @@ class Perceptron(object):
       self.forward(X, batch_size)
 
       if train_mode: # Adjust parameters only during training
-        self.backward(y, lr, batch_size)
+        self.backward(y, lr, batch_size, hinge_and_logits)
 
       # Update accumulated measures
       loss_epoch += self.loss_fn(self[-1].a, y)
