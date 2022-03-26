@@ -1,0 +1,12 @@
+setup.py
+mlp_api/__init__.py
+mlp_api/activation.py
+mlp_api/dataset.py
+mlp_api/layer.py
+mlp_api/loss.py
+mlp_api/perceptron.py
+mlp_api/utility.py
+mlp_api.egg-info/PKG-INFO
+mlp_api.egg-info/SOURCES.txt
+mlp_api.egg-info/dependency_links.txt
+mlp_api.egg-info/top_level.txt

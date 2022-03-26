@@ -51,24 +51,6 @@ class Activation(object):
       return Activation.sigmoid(z) * (1-Activation.sigmoid(z))
 
   @staticmethod
-  def identity(x, derive=False):
-    '''
-    Applies the identity function or its derivative on a set inputs.
-
-    Args:
-      x (ndarray): Input data to apply the activation on
-      derive (bool): True to take derivative of the identity function wrt to x
-    
-    Returns:
-      Same input ("activated") or gradient value from applying the identity function    
-
-    '''
-    if not derive:
-      return x
-    else:
-      return 1
-
-  @staticmethod
   def softmax(z, y=None, derive=False):
     '''
     Applies softmax or its derivative on a set of inputs, typically 
